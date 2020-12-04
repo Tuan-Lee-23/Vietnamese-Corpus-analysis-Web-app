@@ -1,37 +1,46 @@
+import dash_bootstrap_components as dbc 
+import dash_html_components as html 
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
-import plotly.express as px
-import pandas as pd
+
+corpus = ['cau 1 cau 1 cau 1 cau 1',
+          'cau 2 cau 2 cau 2 cau 2',
+          'cau 3 cau 3 cau 3 cau 3',
+          'cau 4 cau 4 cau 4 cau 4',
+          'cau 5 cau 5 cau 5 cau 5',
+          'cau 6 cau 6 cau 6 cau 6']
+
+def getSentences(corpus):
+    result = [dbc.ListGroupItem(sen) for sen in corpus]
+    return result
 
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+title = html.Div([
+    html.H1('Example Div', className = 'display-5')
+], style={'marginBottom': 50, 'marginTop': 25, 'justify': 'center', 'textAlign': 'center'})
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-df = pd.read_csv('https://gist.githubusercontent.com/chriddyp/5d1ea79569ed194d432e56108a04d188/raw/a9f9e8076b837d541398e999dcbac2b2826a81f8/gdp-life-exp-2007.csv')
-
-fig = px.scatter(df, x="gdp per capita", y="life expectancy",
-                 size="population", color="continent", hover_name="country",
-                 log_x=True, size_max=60)
-
-markdown_text = '''
-### Dash and Markdown
-
-Dash apps can be written in Markdownaasdfasdfij.
-Dash uses the [CommonMark](http://commonmark.org/)
-specification of Markdown.
-Check out their [60 Second Markdown Tutorial](http://commonmark.org/help/)
-if this is your first introduction to Markdown!
-'''
-
-app.layout = html.Div([
-    dcc.Graph(
-        id='life-exp-vs-gdp',
-        figure=fig
+card = dbc.Card(
+    dbc.ListGroup(
+        [
+            dbc.ListGroupItem("Item 1: aaaaaaaaaaaaaaaaaaaaa"),
+            dbc.ListGroupItem("Item 2: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
+            dbc.ListGroupItem("Item 3: ccccccccccccccccccccccccccccccccccccc"),
+        ],
+        flush=True,
     ),
-    dcc.Markdown(children = markdown_text)
-])
+    style={"width": "100%", 'textAlign': 'center', 'justify': 'center'},
+)
 
-if __name__ == '__main__':
-    app.run_server(debug=True, threaded = True)
+card = dbc.Card(
+    dbc.ListGroup(
+        getSentences(corpus[:10]),
+        flush=True,
+    ),
+    style={"width": "100%", 'justify': 'center', 'textAlign': 'center'},
+)
+
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+app.layout = html.Div([title, card])
+
+if __name__ == "__main__":
+    app.run_server(debug=True)
