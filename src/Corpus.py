@@ -106,6 +106,7 @@ class Corpus:
     def ner(self):
         def POS_Chunk_ner(txt):
             return ner(txt)
+        # CARE FULLLLLLLLLLLLLLLLLLLLLLLLLL
         self.data_pos_tagged = list(map(POS_Chunk_ner, self.data_sent_segment))
 
     # Search
@@ -119,12 +120,24 @@ class Corpus:
         
         return (False, -1)
 
+    # morpheme and word search
     def search_ambiguous(self, word):
         result = []
         for i, sen in enumerate(self.data_sent_segment):
             temp = self.isIn(sen, word)
             if temp[0]:
                 result.append((self.data[i], temp[1]))
+        return result
+    
+    def search_by_pos(self, search_word, pos):
+        result = set()
+        for i, sen in enumerate(self.data_pos_tagged):
+            if sen: 
+                for word in sen:
+                    if search_word in word[0] and pos == word[1]:
+                        temp = self.isIn(self.data[i], search_word)
+                        result.add((self.data[i], temp[1]))
+        
         return result
 
 
@@ -142,14 +155,17 @@ if __name__ == "__main__":
     corpus.preprocess()
 
     # Search ambiguous
-    test = corpus.search_ambiguous("học viên")
-    for sen in test:
-        print(sen)
+    # test = corpus.search_ambiguous("phương tiện")
+    # for sen in test:
+    #     print(sen)
 
     # Ner (POS + chunk + NER)
     # corpus.ner()
 
-    
+    # print(corpus.data_pos_tagged[111])
+
+    # Search by pos tag
+    # print(corpus.search_by_pos("tiện", 'N'))
 
 
 
