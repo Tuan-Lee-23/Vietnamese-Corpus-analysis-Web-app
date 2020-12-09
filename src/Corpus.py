@@ -19,7 +19,8 @@ class Corpus:
         self.data_pos_tagged = []
         self.data_word_segment = []
         self.data_sent_segment = []
-        self.dict = set()
+        self.vocab = {}
+        self.stopwords = {}
 
     def read(self, dirr):
 
@@ -79,8 +80,18 @@ class Corpus:
             for sen in self.data_sent_segment:
                 word_seg = word_tokenize(sen)
                 for word in word_seg:
-                    if word.lower() not in stop_words:
-                        self.dict.add(word.lower())
+                    word = word.lower()
+                    if word not in stop_words:
+                        if word not in self.vocab:
+                            self.vocab[word] = 1
+                        else:
+                            self.vocab[word] += 1
+                    else:
+                        if word not in self.stopwords:
+                            self.stopwords[word] = 1
+                        else:
+                            self.stopwords[word] += 1
+
             
 
         # clean html
@@ -107,7 +118,11 @@ class Corpus:
         def POS_Chunk_ner(txt):
             return ner(txt)
         # CARE FULLLLLLLLLLLLLLLLLLLLLLLLLL
-        self.data_pos_tagged = list(map(POS_Chunk_ner, self.data_sent_segment))
+        # self.data_pos_tagged = list(map(POS_Chunk_ner, self.data_sent_segment))
+        for i, sen in enumerate(self.data_sent_segment):
+            if i % 1000 == 0:
+                print("--",i, '/', len(self.data_sent_segment),"--")
+            self.data_pos_tagged.append(POS_Chunk_ner(sen))
 
     # Search
     def isIn(self, sentence, word):
@@ -121,23 +136,38 @@ class Corpus:
         return (False, -1)
 
     # morpheme and word search
-    def search_ambiguous(self, word):
-        result = []
-        for i, sen in enumerate(self.data_sent_segment):
-            temp = self.isIn(sen, word)
-            if temp[0]:
-                result.append((self.data[i], temp[1]))
-        return result
+    # def search_ambiguous(self, word):
+    #     result = []
+    #     for i, sen in enumerate(self.data_sent_segment):
+    #         temp = self.isIn(sen, word)
+    #         if temp[0]:
+    #             result.append((self.data[i], temp[1]))
+    #     return result
     
+    # morpheme and word search
+    # case: 0 --> non-case,  1: --> case sensitive
+    def search_ambiguous(self, word, case = 0):
+        if case:
+            ex = r'' + word
+        else:
+            s = word[0]
+            ex = r'[' + s.upper() + s.lower() + ']' + word[1:]
+        result = [i for i in self.data if re.search(ex, i)]
+        return result
+
+
+    # output: 
+    # 0: sentence
+    # 1: position of search_word in sentence
+    # 2: word matched
     def search_by_pos(self, search_word, pos):
         result = set()
         for i, sen in enumerate(self.data_pos_tagged):
             if sen: 
                 for word in sen:
-                    if search_word in word[0] and pos == word[1]:
+                    if search_word.lower() in word[0].lower() and pos == word[1]:
                         temp = self.isIn(self.data[i], search_word)
-                        result.add((self.data[i], temp[1]))
-        
+                        result.add((self.data[i], temp[1], word[0]))
         return result
 
 
@@ -155,7 +185,7 @@ if __name__ == "__main__":
     corpus.preprocess()
 
     # Search ambiguous
-    # test = corpus.search_ambiguous("phương tiện")
+    # test = corpus.search_ambiguous("Phương tiện", 1)
     # for sen in test:
     #     print(sen)
 
@@ -165,8 +195,11 @@ if __name__ == "__main__":
     # print(corpus.data_pos_tagged[111])
 
     # Search by pos tag
-    # print(corpus.search_by_pos("tiện", 'N'))
+    # for s in corpus.search_by_pos("phương", 'N'):
+    #     print(s)
 
+    # Vocab
+    # print(corpus.stopwords)
 
 
 
