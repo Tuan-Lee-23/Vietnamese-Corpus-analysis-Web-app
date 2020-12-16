@@ -1,11 +1,13 @@
 import pandas as pd
-import time
+from time import time
 import numpy as np
 from pyvi import ViTokenizer, ViPosTagger
 import re
 import csv
 
 from nltk import ngrams
+from gensim.models import Word2Vec
+
 
 from underthesea import word_tokenize
 from underthesea import sent_tokenize
@@ -15,12 +17,13 @@ from underthesea import pos_tag
 
 class Corpus:
     def __init__(self):
-        self.data = []
-        self.data_pos_tagged = []
-        self.data_word_segment = []
-        self.data_sent_segment = []
-        self.vocab = {}
-        self.stopwords = {}
+        self.data = []  #original data
+        self.data_pos_tagged = []  # pos_tagging and ner
+        self.data_word_segment = [] # sentence with word segmentation 
+        self.data_sent_segment = [] # sentence with sentence segmentation
+        self.vocab = [] # list of vocabulary
+        self.stopwords = {} # list of stopwords with count value
+        self.w2v_model = {} # word2vec model
 
     def read(self, dirr):
 
@@ -29,7 +32,7 @@ class Corpus:
             lines = f.readlines()
             for line in lines:
                 temp = re.split(r'\t+', line)
-                corpus.append(temp[1])
+                corpus.append(temp[0])
 
         self.data = corpus
 
@@ -70,7 +73,7 @@ class Corpus:
             result = re.sub(r'\d+', '', txt)
             return result 
 
-        def create_dict():
+        def word_tokenize_w_remove_stopwords():
             stop_words = set()
             with open("resources/stop_words.txt", encoding = 'utf-8') as f:
                 lines = f.readlines()
@@ -79,23 +82,22 @@ class Corpus:
 
             for sen in self.data_sent_segment:
                 word_seg = word_tokenize(sen)
+                temp = []
                 for word in word_seg:
-                    word = word.lower()
-                    if word not in stop_words:
-                        if word not in self.vocab:
-                            self.vocab[word] = 1
-                        else:
-                            self.vocab[word] += 1
+                    word_lower = word.lower()
+                    if word_lower not in stop_words:
+                        temp.append(word_lower)
                     else:
-                        if word not in self.stopwords:
-                            self.stopwords[word] = 1
+                        if word_lower not in self.stopwords:  # add to list stopwords
+                            self.stopwords[word_lower] = 0
                         else:
-                            self.stopwords[word] += 1
+                            self.stopwords[word_lower] += 1  # count stopwords
+                self.data_word_segment.append(temp)   # append to data.word_segment
 
             
 
         # clean html
-        self.data = list(map(clean_html, self.data))
+        # self.data = list(map(clean_html, self.data))
         
         # chuẩn hoá bảng mã
         self.data = list(map(normalize_unicode, self.data))
@@ -110,7 +112,39 @@ class Corpus:
         self.data_sent_segment = list(map(remove_nums, self.data_sent_segment))
 
         # Create dictionary (dict)
-        create_dict()
+        word_tokenize_w_remove_stopwords()
+
+    # Train word2vector
+    def train_word2vec(self):
+            w2v_model = Word2Vec(min_count=20,
+                            window=2,
+                            size=300,
+                            sample=6e-5, 
+                            alpha=0.03, 
+                            min_alpha=0.0007, 
+                            negative=20)
+            t = time()
+            w2v_model.build_vocab(sentences = self.data_word_segment, progress_per=10000)
+            print('Time to build vocab: {} mins'.format(round((time() - t) / 60, 2)))
+
+            t = time()
+            w2v_model.train(sentences = self.data_word_segment, total_examples=w2v_model.corpus_count, epochs=30, report_delay=1)
+            print('Time to train the model: {} mins'.format(round((time() - t) / 60, 2)))
+
+            w2v_model.init_sims(replace=True) # lower memory used
+
+            corpus_vocabs = dict()
+            for item in w2v_model.wv.vocab:
+                corpus_vocabs[item]= w2v_model.wv.vocab[item].count
+
+            corpus_vocabs_sorted=dict(sorted(corpus_vocabs.items(), key=lambda x: x[1],reverse=True))
+            
+            self.vocab = corpus_vocabs_sorted
+            self.w2v_model = w2v_model
+
+    # Find top 10 synonyms words
+    def find_similar(self, word):
+        return self.w2v_model.wv.most_similar(word)
 
     # RUN TOO SLOW WITH 30k
     # Phân loại từ, chunk, nhận diện tên riêng
@@ -123,6 +157,24 @@ class Corpus:
             if i % 1000 == 0:
                 print("--",i, '/', len(self.data_sent_segment),"--")
             self.data_pos_tagged.append(POS_Chunk_ner(sen))
+        
+        with open('ner.txt', 'w', encoding = 'utf-8') as fp:
+            for j, sen in enumerate(self.data_pos_tagged):
+                for i, item in enumerate(sen):
+                    fp.write("(" + item[0] + "," + item[1] + "," + item[2] + "," + item[3] + ")")
+                    if i < len(sen) - 1:
+                        fp.write(",")
+                    fp.write("\n")
+                fp.write("\n")
+
+    def read_ner(self):
+        temp = []
+        print("read ner...")
+        with open('ner.txt', 'r', encoding = 'utf-8') as fp:
+            temp = fp.readlines()
+            for line in temp[:10]:
+                print(line)
+        return
 
     # Search
     def isIn(self, sentence, word):
@@ -171,18 +223,18 @@ class Corpus:
         return result
 
 
-if __name__ == "__main__":
-    dirr = "resources/vie-vn_web_2015_30K-sentences.txt"
-    dirr = "resources/corpus_mini.txt"
+# if __name__ == "__main__":
+    # dirr = "resources/vie-vn_web_2015_30K-sentences.txt"
+    # dirr = "resources/corpus_mini.txt"
 
     # initialize Corpus
-    corpus = Corpus()
+    # corpus = Corpus()
 
     # read corpus
-    corpus.read(dirr)
+    # corpus.read(dirr)
 
     # Preprocessing
-    corpus.preprocess()
+    # corpus.preprocess()
 
     # Search ambiguous
     # test = corpus.search_ambiguous("Phương tiện", 1)
@@ -191,6 +243,7 @@ if __name__ == "__main__":
 
     # Ner (POS + chunk + NER)
     # corpus.ner()
+    # corpus.read_ner()
 
     # print(corpus.data_pos_tagged[111])
 
@@ -200,18 +253,3 @@ if __name__ == "__main__":
 
     # Vocab
     # print(corpus.stopwords)
-
-
-
-
-
-
-    
-
-
-
-    
-
-
-    
-    
