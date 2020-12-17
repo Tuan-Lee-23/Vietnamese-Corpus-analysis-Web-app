@@ -13,6 +13,7 @@ from underthesea import word_tokenize
 from underthesea import sent_tokenize
 from underthesea import ner
 from underthesea import pos_tag
+import pickle
 
 
 class Corpus:
@@ -97,7 +98,7 @@ class Corpus:
             
 
         # clean html
-        # self.data = list(map(clean_html, self.data))
+        self.data = list(map(clean_html, self.data))
         
         # chuẩn hoá bảng mã
         self.data = list(map(normalize_unicode, self.data))
@@ -116,13 +117,7 @@ class Corpus:
 
     # Train word2vector
     def train_word2vec(self):
-            w2v_model = Word2Vec(min_count=20,
-                            window=2,
-                            size=300,
-                            sample=6e-5, 
-                            alpha=0.03, 
-                            min_alpha=0.0007, 
-                            negative=20)
+            w2v_model = Word2Vec(size= 500)
             t = time()
             w2v_model.build_vocab(sentences = self.data_word_segment, progress_per=10000)
             print('Time to build vocab: {} mins'.format(round((time() - t) / 60, 2)))
@@ -144,7 +139,11 @@ class Corpus:
 
     # Find top 10 synonyms words
     def find_similar(self, word):
-        return self.w2v_model.wv.most_similar(word)
+        try:
+            temp = self.w2v_model.wv.most_similar(word)
+        except KeyError:
+            return []
+        return temp
 
     # RUN TOO SLOW WITH 30k
     # Phân loại từ, chunk, nhận diện tên riêng
@@ -158,23 +157,21 @@ class Corpus:
                 print("--",i, '/', len(self.data_sent_segment),"--")
             self.data_pos_tagged.append(POS_Chunk_ner(sen))
         
-        with open('ner.txt', 'w', encoding = 'utf-8') as fp:
-            for j, sen in enumerate(self.data_pos_tagged):
-                for i, item in enumerate(sen):
-                    fp.write("(" + item[0] + "," + item[1] + "," + item[2] + "," + item[3] + ")")
-                    if i < len(sen) - 1:
-                        fp.write(",")
-                    fp.write("\n")
-                fp.write("\n")
+        # with open('ner.txt', 'w', encoding = 'utf-8') as fp:
+        #     for j, sen in enumerate(self.data_pos_tagged):
+        #         for i, item in enumerate(sen):
+        #             fp.write("(" + item[0] + "," + item[1] + "," + item[2] + "," + item[3] + ")")
+        #             if i < len(sen) - 1:
+        #                 fp.write(",")
+        #             fp.write("\n")
+        #         fp.write("\n")
+        with open('resources/ner.pik', 'wb') as f:
+            pickle.dump(self.data_pos_tagged, f, -1)
+        print("NER was saved successfully")
 
     def read_ner(self):
-        temp = []
-        print("read ner...")
-        with open('ner.txt', 'r', encoding = 'utf-8') as fp:
-            temp = fp.readlines()
-            for line in temp[:10]:
-                print(line)
-        return
+        with open('resources/ner.pik', 'rb') as f:
+            self.data_pos_tagged = pickle.load(f)
 
     # Search
     def isIn(self, sentence, word):
@@ -209,15 +206,29 @@ class Corpus:
 
 
     # output: 
-    # 0: sentence
+    # 0: matched sentence
     # 1: position of search_word in sentence
-    # 2: word matched
+    # 2: matched word
     def search_by_pos(self, search_word, pos):
         result = set()
         for i, sen in enumerate(self.data_pos_tagged):
             if sen: 
                 for word in sen:
                     if search_word.lower() in word[0].lower() and pos == word[1]:
+                        temp = self.isIn(self.data[i], search_word)
+                        result.add((self.data[i], temp[1], word[0]))
+        return result
+
+    # output: 
+    # 0: sentence
+    # 1: position of search_word in sentence
+    # 2: word matched
+    def search_by_ner(self, search_word, pos):
+        result = set()
+        for i, sen in enumerate(self.data_pos_tagged):
+            if sen: 
+                for word in sen:
+                    if search_word.lower() in word[0].lower() and pos in word[3]:
                         temp = self.isIn(self.data[i], search_word)
                         result.add((self.data[i], temp[1], word[0]))
         return result
