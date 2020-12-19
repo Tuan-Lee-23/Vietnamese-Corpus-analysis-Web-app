@@ -16,6 +16,10 @@ def getSentences(corpus):
     result = [dbc.ListGroupItem(sen) for sen in corpus]
     return result
 
+def returnHighlight(corpus, a):
+    index = corpus.find(a)
+    return index #tra ve vi tri de in
+    
 # checkbox = html.Div([
 #     dcc.RadioItems(
 #                 options = [
