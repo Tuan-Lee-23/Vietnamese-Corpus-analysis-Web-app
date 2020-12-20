@@ -125,9 +125,15 @@ class Corpus:
             t = time()
             w2v_model.train(sentences = self.data_word_segment, total_examples=w2v_model.corpus_count, epochs=30, report_delay=1)
             print('Time to train the model: {} mins'.format(round((time() - t) / 60, 2)))
-
             w2v_model.init_sims(replace=True) # lower memory used
+            with open('resources/w2v.pik', 'wb') as f:
+                pickle.dump(w2v_model, f, -1)
+                print("Word2Vec model was saved successfully")
 
+
+    def read_word2vec(self):
+        with open('resources/w2v.pik', 'rb') as f:
+            w2v_model = pickle.load(f)
             corpus_vocabs = dict()
             for item in w2v_model.wv.vocab:
                 corpus_vocabs[item]= w2v_model.wv.vocab[item].count

@@ -7,6 +7,7 @@ dirr = input("Input directory of corpus:")
 corpus.read(dirr)
 corpus.preprocess()
 corpus.ner()
+corpus.train_word2vec()
 
 
 

@@ -5,7 +5,7 @@ corpus = Corpus() # khởi tạo
 dirr = "resources/corpus_mini.txt"  # chọn đường dẫn corpus
 corpus.read(dirr)  # đọc đường dẫn
 corpus.preprocess()   # Tiền xử lí
-corpus.train_word2vec()  # Train model word2vec để tìm từ đồng nghĩa
+corpus.read_word2vec()  # Đọc model word2vec để tìm từ đồng nghĩa
 corpus.read_ner()   # Đọc dữ liệu đã xử lí tên thực thể và từ loại
 
 # Từ đồng nghĩa. TOp 10 kèm với cosine similarity. Ko tìm thấy thì return list rỗng []
