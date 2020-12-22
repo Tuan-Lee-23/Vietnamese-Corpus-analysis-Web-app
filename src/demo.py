@@ -12,15 +12,22 @@ corpus.read_ner()   # Đọc dữ liệu đã xử lí tên thực thể và t�
 print(corpus.find_similar('trung'))
 
 # Tìm kiếm nhập nhằng (kí tự, từ, tiếng). case = 0 --> non-case sensitive, case = 1 --> case sensitive
-temp = corpus.search_ambiguous('ng', case = 1)
+temp = corpus.search_ambiguous('miền Trung', case = 1)
 for res in temp[:10]:
     print(res)
+
+print("------------------------------------")
 
 # Tìm theo tên thực thể. VD: tìm người tên việt (I- inside, B- begining). Ko thấy trả rỗng
 temp = corpus.search_by_ner('Việt', 'I-PER')
 for res in temp:
     print(res)
 
+temp = corpus.search_by_ner('Chí', 'PER')
+for res in temp:
+    print(res)
+
+print("------------------------------------")
 # Tìm theo loại từ. Ko thấy trả rỗng
 temp = corpus.search_by_pos('Việt', 'N')
 for res in temp:
