@@ -104,7 +104,7 @@ class Corpus:
         self.data = list(map(normalize_unicode, self.data))
 
         # tokenize sentence (data_sent_segment)
-        sentence_tokenize(self.data)
+        # sentence_tokenize(self.data)
 
         # remove punctuation and special chars (data_sent_segment)
         remove_spec_chars(self.data)

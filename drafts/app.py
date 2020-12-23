@@ -7,6 +7,7 @@ import dash_html_components as html
 import plotly.express as px
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
 
 import pandas as pd
 import numpy as np
@@ -35,7 +36,9 @@ df['sentence_split'] = df['sentences'].str.split()
 df['len_sentence'] = df['sentence_split'].apply(len)
 
 # Độ dài câu theo từ
-len_sen_by_words = [len(x) for x in corpus.data_word_segment]
+len_sen_by_words = []
+for temp in corpus.data_word_segment:
+    len_sen_by_words.append(len(temp))
 df['len_sentence_by_words'] = np.array(len_sen_by_words)
 
 # Fig 1
@@ -85,7 +88,7 @@ def update_graph1(value):
                      "len_sentence": "Độ dài các câu"
                     }, 
                     histnorm='probability density',
-                    marginal= 'violin',
+                    marginal= 'box',
                     color_discrete_sequence= ['#4F2992'],
                     height = 500).update(layout=dict(title=dict(x=0.5)))
     
@@ -96,7 +99,7 @@ def update_graph1(value):
                 "len_sentence_by_words": "Độ dài các câu"
             }, 
             histnorm='probability density',
-            marginal= 'violin',
+            marginal= 'box',
             color_discrete_sequence= ['#4F2992'],
             height = 500).update(layout=dict(title=dict(x=0.5)))
 
@@ -189,11 +192,16 @@ top_10_vocab_bigrams = top_10_vocab_bigrams.head(10)
 
 fig3_2 = plotBar(top_10_vocab_bigrams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (bi-grams)')
 
+# fig 3_3
+top_10_vocab_trigrams = vocab_df[vocab_df['gram_len'] == 3]
+top_10_vocab_trigrams = top_10_vocab_trigrams.head(10)
+
+fig3_3 = plotBar(top_10_vocab_trigrams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (tri-grams)')
 
 statistics = [
-    dbc.Row([
-        dbc.Col(html.H1("PHÂN TÍCH VÀ THỐNG KÊ", className = 'text-center text-primary, mb-4'), width = 12)
-    ]),
+
+    dbc.Col(html.H1("PHÂN TÍCH VÀ THỐNG KÊ", className = 'text-center'), 
+        width = 12, style = {'background': '#4F2992', 'color': 'white', 'padding': 8, 'marginBottom': 5}),
     # graph 1 + 2
     dbc.Row([
 
@@ -246,6 +254,16 @@ statistics = [
             dcc.Graph(
                 id = 'fig3_2',
                 figure = fig3_2
+            )
+        )
+    ], style = {'marginTop': 50}),
+
+    # Graph 3_3
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig3_3',
+                figure = fig3_3
             )
         )
     ], style = {'marginTop': 50})
