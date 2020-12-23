@@ -198,6 +198,13 @@ top_10_vocab_trigrams = top_10_vocab_trigrams.head(10)
 
 fig3_3 = plotBar(top_10_vocab_trigrams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (tri-grams)')
 
+# fig 3_3
+top_10_vocab_4grams = vocab_df[vocab_df['gram_len'] == 4]
+top_10_vocab_4grams = top_10_vocab_4grams.head(10)
+
+fig3_4 = plotBar(top_10_vocab_4grams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (4-grams)')
+
+
 statistics = [
 
     dbc.Col(html.H1("PHÂN TÍCH VÀ THỐNG KÊ", className = 'text-center'), 
@@ -264,6 +271,16 @@ statistics = [
             dcc.Graph(
                 id = 'fig3_3',
                 figure = fig3_3
+            )
+        )
+    ], style = {'marginTop': 50}),
+
+    # Graph 3_4
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig3_4',
+                figure = fig3_4
             )
         )
     ], style = {'marginTop': 50})
