@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 from Corpus import Corpus
 import dash
 import dash_core_components as dcc
@@ -211,7 +211,7 @@ statistics = [
                     value= 0,
                     labelStyle={'display': 'inline-block', 'paddingLeft': 10, 'textAlign': 'center'}
             )
-        ], style = {'textAlign': 'center'}), 
+        ], style = {'textAlign': 'center'}, width = 6), 
 
         # graph 1_2
         dbc.Col(
