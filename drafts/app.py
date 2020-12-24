@@ -40,6 +40,7 @@ len_sen_by_words = []
 for temp in corpus.data_word_segment:
     len_sen_by_words.append(len(temp))
 df['len_sentence_by_words'] = np.array(len_sen_by_words)
+df = df[df['len_sentence_by_words'] > 0]
 
 # Fig 1
 fig1 = px.histogram(df, x="len_sentence", nbins = 30,
@@ -136,9 +137,62 @@ def update_graph1_2(value):
     return fig1_2
 
 # fig2---------------------------------------------
-tong_tieng = df['len_sentence'].sum()
-tong_tu = df['len_sentence_by_words'].sum()
+stop_words = set()
+with open("resources/stop_words.txt", encoding = 'utf-8') as f:
+    lines = f.readlines()
+    for line in lines:
+        stop_words.add(line.rstrip('\n'))
+
 tong_cau = len(corpus.data_sent_segment)
+tong_tieng = df['sentence_split'].to_numpy()
+tong_tieng = np.array([np.array(x) for x in tong_tieng])
+temp = []
+
+for vec in tong_tieng:
+    for word in vec:
+        # if word not in stop_words:
+            # temp.append(word.lower())
+        temp.append(word.lower())
+
+tong_tieng = len(set(temp))
+
+# print(len(temp))
+# print(len(set(temp)))
+
+# Step of couting tieng: vẽ scatter plot show ra tiến trình nhận được số tiếng giảm dần
+step_count = 0
+step_np = []
+tieng_temp = set()
+for i, tieng in enumerate(temp):
+    if tieng not in tieng_temp:
+        tieng_temp.add(tieng)
+        step_count += 1
+        step_np.append(np.array([i + 1, step_count]))
+step_np = np.array(step_np)
+step_df = pd.DataFrame({'so luong tieng': step_np[:, 0], 'so luong tieng (ko trung)': step_np[:, 1]})
+
+#----------------
+
+temp = []
+for vec in corpus.data_word_segment:
+    for word in vec:
+        temp.append(word)
+
+tong_tu = len(set(temp))
+
+step_count = 0
+step_np_tu = []
+tu_temp = set()
+for i, tu in enumerate(temp):
+    if tu not in tu_temp:
+        tu_temp.add(tu)
+        step_count += 1
+        step_np_tu.append(np.array([i + 1, step_count]))
+step_np_tu = np.array(step_np_tu)
+step_df_tu = pd.DataFrame({'so luong tu': step_np_tu[:, 0], 'so luong tu (ko trung)': step_np_tu[:, 1]})
+
+
+
 
 fig2 = go.Figure([go.Bar(x = ['Tổng câu', 'Tổng từ', 'Tổng tiếng'], 
                 y = [tong_cau, tong_tu, tong_tieng],
@@ -149,6 +203,37 @@ fig2.update_layout(
     height = 500
 )
 fig2.update(layout=dict(title=dict(x=0.5)))
+
+# fig2_1
+fig2_1 = px.line(step_df, 'so luong tieng', 'so luong tieng (ko trung)', 
+                title = 'Sự tăng tiến về số lượng của tiếng',
+                color_discrete_sequence = ['#4F2992'],
+                height = 500,
+                labels = {'so luong tieng': 'Số lượng tiếng',
+                          'so luong tieng (ko trung)': 'Số lượng tiếng (không trùng)'}).update(layout=dict(title=dict(x=0.5)))
+
+fig2_1_tu = px.line(step_df_tu, 'so luong tu', 'so luong tu (ko trung)', 
+                title = 'Sự tăng tiến về số lượng của từ',
+                color_discrete_sequence = ['#4F2992'],
+                height = 500,
+                labels = {'so luong tu': 'Số lượng từ',
+                          'so luong tu (ko trung)': 'Số lượng từ (không trùng)'}).update(layout=dict(title=dict(x=0.5)))
+
+# fig 2_2
+fig2_2 = px.scatter(df, 'len_sentence','len_sentence_by_words', color = 'len_sentence_by_words',
+                    title = 'Độ dài tiếng vs độ dài từ',
+                    height = 500,
+                    labels = {'len_sentence': 'Độ dài tiếng', 
+                              'len_sentence_by_words': 'Độ dài từ'}).update(layout=dict(title=dict(x=0.5)))
+
+# fig 2_3
+temp = df.groupby('len_sentence')['len_sentence_by_words'].mean().reset_index()
+fig2_3 = px.scatter(temp, 'len_sentence', 'len_sentence_by_words', color = 'len_sentence_by_words',
+                    title = 'Độ dài tiếng vs trung bình độ dài từ',
+                    height = 500,
+                    labels = {'len_sentence': 'Độ dài tiếng', 
+                              'len_sentence_by_words': 'Trung bình độ dài từ'}).update(layout=dict(title=dict(x=0.5)))
+
 
 
 # fig 3----------------------------------------------
@@ -204,6 +289,7 @@ top_10_vocab_4grams = top_10_vocab_4grams.head(10)
 
 fig3_4 = plotBar(top_10_vocab_4grams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (4-grams)')
 
+# fig 4
 
 statistics = [
 
@@ -245,6 +331,41 @@ statistics = [
             )
         ), style = {'marginLeft': -38, 'marginRight': -38}),
 
+    # Graph 2_1, 2_1_tu
+    dbc.Row([
+        dbc.Col([
+            dcc.Graph(
+                id = 'fig2_1',
+                figure = fig2_1
+            )
+        ], width = 6), 
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig2_1_tu',
+                figure = fig2_1_tu
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52}),
+
+    # Graph 2_2, 2_3
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig2_2',
+                figure = fig2_2
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig2_3',
+                figure = fig2_3
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52}),
+
     # Graph 3
     dbc.Row([
         dbc.Col(
@@ -253,7 +374,7 @@ statistics = [
                 figure = fig3
             )
         )
-    ], style = {'marginTop': 50}),
+    ]),
 
     # Graph 3_2
     dbc.Row([
@@ -263,7 +384,7 @@ statistics = [
                 figure = fig3_2
             )
         )
-    ], style = {'marginTop': 50}),
+    ]),
 
     # Graph 3_3
     dbc.Row([
@@ -273,7 +394,7 @@ statistics = [
                 figure = fig3_3
             )
         )
-    ], style = {'marginTop': 50}),
+    ]),
 
     # Graph 3_4
     dbc.Row([
@@ -283,7 +404,7 @@ statistics = [
                 figure = fig3_4
             )
         )
-    ], style = {'marginTop': 50})
+    ])
 ]
 
 
