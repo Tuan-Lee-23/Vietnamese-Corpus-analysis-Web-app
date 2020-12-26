@@ -68,7 +68,7 @@ class Corpus:
             self.data = np.hstack(data_test).tolist()
 
         def remove_spec_chars(data):
-            self.data_sent_segment =  [re.sub(r'[^\w\s]', '', sen) for sen in data]
+            self.data_sent_segment =  [re.sub(r'[^,.\w\s]', '', sen) for sen in data]
 
         def remove_nums(txt):
             result = re.sub(r'\d+', '', txt)
@@ -86,7 +86,7 @@ class Corpus:
                 temp = []
                 for word in word_seg:
                     word_lower = word.lower()
-                    if word_lower not in stop_words:
+                    if word_lower not in stop_words and word_lower != '.' and word_lower != ',' and word_lower != '...':
                         temp.append(word_lower)
                     else:
                         if word_lower not in self.stopwords:  # add to list stopwords
@@ -94,6 +94,8 @@ class Corpus:
                         else:
                             self.stopwords[word_lower] += 1  # count stopwords
                 self.data_word_segment.append(temp)   # append to data.word_segment
+            # self.data_word_segment.remove(',')
+            # self.data_word_segment.remove('.')
 
             
 
@@ -204,10 +206,10 @@ class Corpus:
     def search_ambiguous(self, word, case = 0):
         if case:
             ex = r'' + word
+            result = [i for i in self.data if re.search(ex, i)]
         else:
-            s = word[0]
-            ex = r'[' + s.upper() + s.lower() + ']' + word[1:]
-        result = [i for i in self.data if re.search(ex, i)]
+            ex = r'' + word.lower()
+            result = [i for i in self.data if re.search(ex, i.lower())]
         return result
 
 

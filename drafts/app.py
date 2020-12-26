@@ -8,6 +8,7 @@ import plotly.express as px
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
+from statsmodels.graphics.gofplots import qqplot
 
 import pandas as pd
 import numpy as np
@@ -17,7 +18,7 @@ import numpy as np
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 corpus = Corpus()
-corpus.read('resources/corpus_mini.txt')
+corpus.read('resources/vn_express.txt')
 corpus.preprocess()
 # corpus.read_word2vec()
 
@@ -136,6 +137,66 @@ def update_graph1_2(value):
     
     return fig1_2
 
+# Graph 1_3
+
+
+fig1_3 = go.Figure()
+
+@app.callback(
+    Output("fig1_3", "figure"), 
+    Input("sen_choose", 'value')
+)
+def update_graph1_3(value):
+    if value == 0:
+        qqplot_data= qqplot(df['len_sentence'], line = 's').gca().lines
+        fig1_3 = go.Figure()
+    else:
+        qqplot_data = qqplot(df['len_sentence_by_words'], line = 's').gca().lines
+        fig1_3 = go.Figure()
+    
+    fig1_3.add_trace({
+        'type': 'scatter',
+        'x': qqplot_data[0].get_xdata(),
+        'y': qqplot_data[0].get_ydata(),
+        'mode': 'markers',
+        'marker': {
+            'color': '#4F2992'
+        }
+    })
+
+    fig1_3.add_trace({
+        'type': 'scatter',
+        'x': qqplot_data[1].get_xdata(),
+        'y': qqplot_data[1].get_ydata(),
+        'mode': 'lines',
+        'line': {
+            'color': '#B1339E'
+        }
+
+    })
+
+
+    fig1_3['layout'].update({
+        'title': 'Quantile-Quantile Plot',
+        'xaxis': {
+            'title': 'Theoritical Quantities',
+            'zeroline': False
+        },
+        'yaxis': {
+            'title': 'Sample Quantities'
+        },
+        'showlegend': False,
+        'width': 1000,
+        'height': 700,
+    })
+   
+    fig1_3.update(layout=dict(title=dict(x=0.5)))
+
+    return fig1_3
+
+
+
+
 # fig2---------------------------------------------
 stop_words = set()
 with open("resources/stop_words.txt", encoding = 'utf-8') as f:
@@ -177,7 +238,7 @@ temp = []
 for vec in corpus.data_word_segment:
     for word in vec:
         temp.append(word)
-
+dictionary = temp
 tong_tu = len(set(temp))
 
 step_count = 0
@@ -246,7 +307,6 @@ def itertools_chain(a):
 vocab = itertools_chain(corpus.data_word_segment)
 vocab = dict(Counter(vocab))
 sample_space = sum(vocab.values())
-
 # Create dataframe
 vocab_df = pd.DataFrame.from_dict(vocab, orient = 'index', columns = ['count'])
 
@@ -260,12 +320,14 @@ top_10_vocab = vocab_df.head(10)
 def plotBar(df, xs, ys, title):
     return px.bar(df, x = xs, y = ys, 
                 title = title,
-                color_discrete_sequence= ['#4F2992']
-                ).update(layout=dict(title=dict(x=0.5)))
+                color_discrete_sequence= ['#4F2992'],
+                labels = {'index': 'Từ', 
+                              'count': str('Xác suất xuất hiện (' + str(sample_space)+')')
+                        }).update(layout=dict(title=dict(x=0.5)))
 
 
 fig3 = plotBar(top_10_vocab, top_10_vocab.index, 'count',
-              title = 'Top 10 từ phổ biến nhất (n - grams)')
+              title = 'Top 10 từ phổ biến nhất (n - tiếng)')
 
 
 # fig 3_2
@@ -275,19 +337,24 @@ vocab_df['gram_len'] = vocab_df['index'].apply(lambda x: len(x.split()))
 top_10_vocab_bigrams = vocab_df[vocab_df['gram_len'] == 2]
 top_10_vocab_bigrams = top_10_vocab_bigrams.head(10)
 
-fig3_2 = plotBar(top_10_vocab_bigrams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (bi-grams)')
+fig3_2 = plotBar(top_10_vocab_bigrams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (2 tiếng)')
 
 # fig 3_3
 top_10_vocab_trigrams = vocab_df[vocab_df['gram_len'] == 3]
 top_10_vocab_trigrams = top_10_vocab_trigrams.head(10)
 
-fig3_3 = plotBar(top_10_vocab_trigrams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (tri-grams)')
+fig3_3 = plotBar(top_10_vocab_trigrams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (3 tiếng)')
 
 # fig 3_3
 top_10_vocab_4grams = vocab_df[vocab_df['gram_len'] == 4]
 top_10_vocab_4grams = top_10_vocab_4grams.head(10)
 
-fig3_4 = plotBar(top_10_vocab_4grams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (4-grams)')
+fig3_4 = plotBar(top_10_vocab_4grams, 'index', 'count', title = 'Top 10 từ phổ biến nhất (4 tiếng)')
+
+# tu dai nhat
+longest_word = max(dictionary, key = len)
+len_longest = len(corpus.search_ambiguous(longest_word))
+
 
 # fig 4
 
@@ -322,14 +389,23 @@ statistics = [
             ))
     ], style = {'marginLeft': -52, 'marginRight': -52}),
 
+    # graph 1_3
+    dbc.Row([
+        dcc.Graph(
+            id = 'fig1_3',
+            figure = fig1_3
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+
     # Graph 2
-    dbc.Row(        
-        dbc.Col(
-            dcc.Graph(
-                id='fig2',
-                figure = fig2
-            )
-        ), style = {'marginLeft': -38, 'marginRight': -38}),
+    
+    dbc.Row([
+        dcc.Graph(
+            id='fig2',
+            figure = fig2
+        )]
+    , style = {'marginLeft': -38, 'marginRight': -38, 'justifyContent': 'center'}),
 
     # Graph 2_1, 2_1_tu
     dbc.Row([
@@ -345,7 +421,7 @@ statistics = [
                 figure = fig2_1_tu
             )
         )
-    ], style = {'marginLeft': -52, 'marginRight': -52}),
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
 
     # Graph 2_2, 2_3
     dbc.Row([
@@ -355,7 +431,7 @@ statistics = [
                 figure = fig2_2
             )
         )
-    ], style = {'marginLeft': -52, 'marginRight': -52}),
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
 
     dbc.Row([
         dbc.Col(
@@ -364,7 +440,7 @@ statistics = [
                 figure = fig2_3
             )
         )
-    ], style = {'marginLeft': -52, 'marginRight': -52}),
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
 
     # Graph 3
     dbc.Row([
@@ -374,7 +450,7 @@ statistics = [
                 figure = fig3
             )
         )
-    ]),
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
 
     # Graph 3_2
     dbc.Row([
@@ -384,7 +460,7 @@ statistics = [
                 figure = fig3_2
             )
         )
-    ]),
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
 
     # Graph 3_3
     dbc.Row([
@@ -394,7 +470,7 @@ statistics = [
                 figure = fig3_3
             )
         )
-    ]),
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
 
     # Graph 3_4
     dbc.Row([
@@ -404,7 +480,17 @@ statistics = [
                 figure = fig3_4
             )
         )
-    ])
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        html.H3("Từ dài nhất: "),
+        html.H3(longest_word, style = {'color': '#4F2992', 'fontWeight': 'bold'})
+    ], style = {'marginTop': 100, 'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        html.H3("Số lần xuất hiện: " + str(len_longest))
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center', 'marginBottom': 100})
+
 ]
 
 
