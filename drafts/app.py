@@ -322,7 +322,7 @@ def plotBar(df, xs, ys, title):
                 title = title,
                 color_discrete_sequence= ['#4F2992'],
                 labels = {'index': 'Từ', 
-                              'count': str('Xác suất xuất hiện (' + str(sample_space)+')')
+                              'count': str('Tần suất xuất hiện (' + str(sample_space)+')')
                         }).update(layout=dict(title=dict(x=0.5)))
 
 
@@ -357,6 +357,20 @@ len_longest = len(corpus.search_ambiguous(longest_word))
 
 
 # fig 4
+stop_words_dict = corpus.stopwords
+# print(sorted(stop_words_dict))
+stop_words_df = pd.DataFrame.from_dict(stop_words_dict, orient = 'index', columns = ['count'])
+stop_words_df = stop_words_df.sort_values('count', ascending= False).reset_index().head(10)
+
+sample_space_sw = stop_words_df['count'].sum()
+stop_words_df['count'] = stop_words_df['count'] / sample_space_sw
+
+fig4_1 = plotBar(stop_words_df, 'index', 'count', 'Top 10 stop-words')
+fig4_1.update_layout(
+    xaxis_title = 'Từ',
+    yaxis_title = 'Tần suất xuất hiện (' + str(sample_space_sw) + ')'
+)
+
 
 statistics = [
 
@@ -489,7 +503,18 @@ statistics = [
 
     dbc.Row([
         html.H3("Số lần xuất hiện: " + str(len_longest))
-    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center', 'marginBottom': 100})
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center', 'marginBottom': 100}),
+
+    # Graph 3_4
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig4_1',
+                figure = fig4_1
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
 
 ]
 
@@ -499,4 +524,4 @@ app.layout = dbc.Container(
 )
 
 if __name__ == '__main__':
-    app.run_server(debug=True, threaded = True)
+    app.run_server(host= '127.0.0.1', port = 80, debug= True)

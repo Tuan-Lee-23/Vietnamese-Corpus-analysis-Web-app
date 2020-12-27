@@ -1,7 +1,6 @@
 import pandas as pd
 from time import time
 import numpy as np
-from pyvi import ViTokenizer, ViPosTagger
 import re
 import csv
 
@@ -89,10 +88,11 @@ class Corpus:
                     if word_lower not in stop_words and word_lower != '.' and word_lower != ',' and word_lower != '...':
                         temp.append(word_lower)
                     else:
-                        if word_lower not in self.stopwords:  # add to list stopwords
-                            self.stopwords[word_lower] = 0
-                        else:
-                            self.stopwords[word_lower] += 1  # count stopwords
+                        if word != '.' and word != ',' and word != '...':
+                            if word_lower not in self.stopwords:  # add to list stopwords
+                                self.stopwords[word_lower] = 0
+                            else:
+                                self.stopwords[word_lower] += 1  # count stopwords
                 self.data_word_segment.append(temp)   # append to data.word_segment
             # self.data_word_segment.remove(',')
             # self.data_word_segment.remove('.')
