@@ -457,6 +457,7 @@ df = pd.DataFrame(corpus.data_sent_segment, columns = ['sentences'])
 df['sentence_split'] = df['sentences'].str.split()
 df['len_sentence'] = df['sentence_split'].apply(len)
 
+
 df['nouns_count'] = nouns_count
 df['verbs_count'] = verbs_count
 df['adj_count'] = adj_count
@@ -586,7 +587,6 @@ fig7.update_layout(
     yaxis_title = 'Xác suất xuất hiện (' + str(total_ner) + ')'
 )
 
-fig7.show()
 
 
 
