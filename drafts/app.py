@@ -18,8 +18,9 @@ import numpy as np
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 corpus = Corpus()
-corpus.read('resources/vn_express.txt')
+corpus.read('resources/corpus_mini.txt')
 corpus.preprocess()
+corpus.read_ner()
 # corpus.read_word2vec()
 
 df = pd.DataFrame(corpus.data_sent_segment, columns = ['sentences'])
@@ -282,18 +283,18 @@ fig2_1_tu = px.line(step_df_tu, 'so luong tu', 'so luong tu (ko trung)',
 
 # fig 2_2
 fig2_2 = px.scatter(df, 'len_sentence','len_sentence_by_words', color = 'len_sentence_by_words',
-                    title = 'Độ dài tiếng vs độ dài từ',
+                    title = 'Độ dài câu theo tiếng vs độ dài câu theo từ',
                     height = 500,
-                    labels = {'len_sentence': 'Độ dài tiếng', 
-                              'len_sentence_by_words': 'Độ dài từ'}).update(layout=dict(title=dict(x=0.5)))
+                    labels = {'len_sentence': 'Độ dài câu theo tiếng', 
+                              'len_sentence_by_words': 'Độ dài câu theo từ'}).update(layout=dict(title=dict(x=0.5)))
 
 # fig 2_3
 temp = df.groupby('len_sentence')['len_sentence_by_words'].mean().reset_index()
 fig2_3 = px.scatter(temp, 'len_sentence', 'len_sentence_by_words', color = 'len_sentence_by_words',
-                    title = 'Độ dài tiếng vs trung bình độ dài từ',
+                    title = 'Độ dài câu theo tiếng vs trung bình độ dài câu theo từ',
                     height = 500,
-                    labels = {'len_sentence': 'Độ dài tiếng', 
-                              'len_sentence_by_words': 'Trung bình độ dài từ'}).update(layout=dict(title=dict(x=0.5)))
+                    labels = {'len_sentence': 'Độ dài câu theo tiếng', 
+                              'len_sentence_by_words': 'Trung bình độ dài câu theo từ'}).update(layout=dict(title=dict(x=0.5)))
 
 
 
@@ -370,6 +371,223 @@ fig4_1.update_layout(
     xaxis_title = 'Từ',
     yaxis_title = 'Tần suất xuất hiện (' + str(sample_space_sw) + ')'
 )
+
+# fig 5
+def getPOS(data, type):
+    pos_container = []
+    pos_count = []
+    for i, sen in enumerate(data):
+        count = 0
+        # print(sen)
+        if sen: 
+            for word in sen:
+                if word[1] == type:
+                    pos_container.append(word[0].lower())
+                    count += 1
+        # print(count)
+        pos_count.append(count)
+    
+    return pos_container, pos_count
+
+nouns, nouns_count = getPOS(corpus.data_pos_tagged, 'N')
+verbs, verbs_count = getPOS(corpus.data_pos_tagged, 'V')
+adj, adj_count = getPOS(corpus.data_pos_tagged, 'A')
+
+nouns_set = set(nouns)
+verbs_set = set(verbs)
+adj_set = set(adj)
+
+
+pos_df = pd.DataFrame({'type': ['danh từ', 'động từ', 'tính từ'], 
+                    'count': [len(nouns_set), len(verbs_set), len(adj_set)]})
+
+noun_hist = pd.DataFrame({'count': nouns_count})
+
+fig5_1 = plotBar(pos_df, 'type', 'count', 'Tổng số danh từ, động từ, tính từ')
+fig5_1.update_layout(
+    xaxis_title = 'Từ loại',
+    yaxis_title = 'Số lượng'
+)
+# fig5_1.show()
+
+
+fig5_2 = px.histogram(noun_hist, x = "count", nbins = int(np.ceil(np.sqrt(len(nouns_count))).astype('int')),
+                    title = 'Phân phối số lượng danh từ trong 1 câu',
+                    labels={
+                     "count": "số lượng"
+                    }, 
+                    histnorm='probability density',
+                    marginal= 'box',
+                    color_discrete_sequence= ['#4F2992'],
+                    height = 500).update(layout=dict(title=dict(x=0.5)))
+
+
+# fig5_2.show()
+
+#fig5_3
+verb_hist = pd.DataFrame({'count': verbs_count})
+
+fig5_3 = px.histogram(verb_hist, x = "count", nbins = int(np.ceil(np.sqrt(len(verbs_count))).astype('int')),
+                    title = 'Phân phối số lượng động từ trong 1 câu',
+                    labels={
+                     "count": "số lượng"
+                    }, 
+                    histnorm='probability density',
+                    marginal= 'box',
+                    color_discrete_sequence= ['#4F2992'],
+                    height = 500).update(layout=dict(title=dict(x=0.5)))
+
+#fig5_4
+adj_hist = pd.DataFrame({'count': adj_count})
+
+fig5_4 = px.histogram(adj_hist, x = "count", nbins = int(np.ceil(np.sqrt(len(adj_count))).astype('int')),
+                    title = 'Phân phối số lượng tính từ trong 1 câu',
+                    labels={
+                     "count": "số lượng"
+                    }, 
+                    histnorm='probability density',
+                    marginal= 'box',
+                    color_discrete_sequence= ['#4F2992'],
+                    height = 500).update(layout=dict(title=dict(x=0.5)))
+
+# fig 6_1
+df = pd.DataFrame(corpus.data_sent_segment, columns = ['sentences'])
+
+# Độ dài câu theo tiếng
+df['sentence_split'] = df['sentences'].str.split()
+df['len_sentence'] = df['sentence_split'].apply(len)
+
+df['nouns_count'] = nouns_count
+df['verbs_count'] = verbs_count
+df['adj_count'] = adj_count
+
+# Độ dài câu theo từ
+len_sen_by_words = []
+for temp in corpus.data_word_segment:
+    len_sen_by_words.append(len(temp))
+df['len_sentence_by_words'] = np.array(len_sen_by_words)
+
+df = df[df['len_sentence_by_words'] > 0]
+
+
+fig6_1 = px.scatter(df, 'len_sentence_by_words', 'nouns_count', color = 'len_sentence_by_words',
+                    title = 'Độ dài câu theo từ vs số lượng danh từ',
+                    height = 500,
+                    labels = {'len_sentence_by_words': 'Độ dài câu theo từ', 
+                              'nouns_count': 'Số lượng danh từ'}).update(layout=dict(title=dict(x=0.5)))
+
+
+# fig 6_2
+temp = df.groupby('len_sentence_by_words')['nouns_count'].median().reset_index()
+fig6_2 = px.scatter(temp, 'len_sentence_by_words', 'nouns_count', color = 'len_sentence_by_words',
+                    title = 'Độ dài câu theo từ vs trung bình số lượng danh từ',
+                    height = 500,
+                    labels = {'len_sentence_by_words': 'Độ dài câu theo từ', 
+                              'nouns_count': 'Trung bình số lượng danh từ'}).update(layout=dict(title=dict(x=0.5)))
+
+
+# fig 6_3
+fig6_3 = px.scatter(df, 'len_sentence_by_words', 'verbs_count', color = 'len_sentence_by_words',
+                    title = 'Độ dài câu theo từ vs số lượng động từ',
+                    height = 500,
+                    labels = {'len_sentence_by_words': 'Độ dài câu theo từ', 
+                              'nouns_count': 'Số lượng động từ'}).update(layout=dict(title=dict(x=0.5)))
+
+# fig 6_4
+temp = df.groupby('len_sentence_by_words')['verbs_count'].median().reset_index()
+fig6_4 = px.scatter(temp, 'len_sentence_by_words', 'verbs_count', color = 'len_sentence_by_words',
+                    title = 'Độ dài câu theo từ vs trung bình số lượng động từ',
+                    height = 500,
+                    labels = {'len_sentence_by_words': 'Độ dài câu theo từ', 
+                              'nouns_count': 'Trung bình số lượng động từ'}).update(layout=dict(title=dict(x=0.5)))
+
+# fig 6_5
+fig6_5 = px.scatter(df, 'len_sentence_by_words', 'adj_count', color = 'len_sentence_by_words',
+                    title = 'Độ dài câu theo từ vs số lượng động từ',
+                    height = 500,
+                    labels = {'len_sentence_by_words': 'Độ dài câu theo từ', 
+                              'nouns_count': 'Số lượng động từ'}).update(layout=dict(title=dict(x=0.5)))
+
+# # fig 6_6
+# temp = df.groupby('len_sentence_by_words')['adj_count'].median().reset_index()
+# fig6_6 = px.scatter(temp, 'len_sentence_by_words', 'adj_count', color = 'len_sentence_by_words',
+#                     title = 'Độ dài câu theo từ vs trung bình số lượng tính từ',
+#                     height = 500,
+#                     labels = {'len_sentence_by_words': 'Độ dài câu theo từ', 
+#                               'nouns_count': 'Trung bình số lượng tính từ'}).update(layout=dict(title=dict(x=0.5)))
+
+
+# fig 6_7: histogram danh từ, động từ, tính từ có trung bình bao nhiêu tiếng
+nouns_len = np.array([len(x.split()) for x in nouns])
+nouns_df = pd.DataFrame({'count': nouns_len})
+sample = len(nouns_len)
+
+fig6_7 = px.histogram(nouns_df, x = "count", nbins = 10,
+                    title = 'Phân phối số lượng tiếng của danh từ ' + '(' + str(sample) + ')',
+                    histnorm='probability density',
+                    color_discrete_sequence= ['#4F2992'],
+                    height = 500).update(layout=dict(title=dict(x=0.5)))
+
+# fig 6_8
+verbs_len = np.array([len(x.split()) for x in verbs])
+verbs_df = pd.DataFrame({'count': verbs_len})
+sample = len(verbs_len)
+
+fig6_8 = px.histogram(verbs_df, x = "count", nbins = 10,
+                    title = 'Phân phối số lượng tiếng của động từ ' + '(' + str(sample) + ')',
+                    histnorm='probability density',
+                    color_discrete_sequence= ['#4F2992'],
+                    height = 500).update(layout=dict(title=dict(x=0.5)))
+
+
+# fig 6_9
+adj_len = np.array([len(x.split()) for x in adj])
+adj_df = pd.DataFrame({'count': adj_len})
+sample = len(adj_len)
+
+fig6_9 = px.histogram(adj_df, x = "count", nbins = 4,
+                    title = 'Phân phối số lượng tiếng của tính từ ' + '(' + str(sample) + ')',
+                    histnorm='probability density',
+                    color_discrete_sequence= ['#4F2992'],
+                    height = 500).update(layout=dict(title=dict(x=0.5)))
+
+#fig 7 top ten thuc the
+def getNER(data, type):
+    ner_container = []
+    for sen in data:
+        # print(sen)
+        if sen: 
+            for word in sen:
+                if type in word[3]:
+                    ner_container.append(word[0])
+
+    return ner_container
+
+loc = getNER(corpus.data_pos_tagged, 'LOC')
+per = getNER(corpus.data_pos_tagged, 'PER')
+org = getNER(corpus.data_pos_tagged, 'ORG')
+
+loc = set(loc)
+per = set(per)
+org = set(org)
+
+total_ner = len(loc) + len(per) + len(org)
+len_loc = len(loc) / total_ner 
+len_per = len(per) / total_ner 
+len_org = len(org) / total_ner
+
+ner_df = pd.DataFrame({"ner": ['location', 'person', 'organization'], "count": [len_loc, len_per, len_org]})
+print(ner_df)
+
+
+fig7 = plotBar(ner_df, 'ner', 'count', 'Top 10 stop-words')
+fig7.update_layout(
+    xaxis_title = 'NER',
+    yaxis_title = 'Xác suất xuất hiện (' + str(total_ner) + ')'
+)
+
+fig7.show()
+
 
 
 statistics = [
@@ -496,16 +714,7 @@ statistics = [
         )
     ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
 
-    dbc.Row([
-        html.H3("Từ dài nhất: "),
-        html.H3(longest_word, style = {'color': '#4F2992', 'fontWeight': 'bold'})
-    ], style = {'marginTop': 100, 'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
-
-    dbc.Row([
-        html.H3("Số lần xuất hiện: " + str(len_longest))
-    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center', 'marginBottom': 100}),
-
-    # Graph 3_4
+    # Graph 4_1
     dbc.Row([
         dbc.Col(
             dcc.Graph(
@@ -523,5 +732,5 @@ app.layout = dbc.Container(
     statistics
 )
 
-if __name__ == '__main__':
-    app.run_server(host= '127.0.0.1', port = 80, debug= True)
+# if __name__ == '__main__':
+    # app.run_server(host= '127.0.0.1', port = 80, debug= True)
