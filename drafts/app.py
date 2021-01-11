@@ -369,7 +369,7 @@ stop_words_df['count'] = stop_words_df['count'] / sample_space_sw
 fig4_1 = plotBar(stop_words_df, 'index', 'count', 'Top 10 stop-words')
 fig4_1.update_layout(
     xaxis_title = 'Từ',
-    yaxis_title = 'Tần suất xuất hiện (' + str(sample_space_sw) + ')'
+    yaxis_title = 'Xác suất xuất hiện (' + str(sample_space_sw) + ')'
 )
 
 # fig 5
