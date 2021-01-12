@@ -1,37 +1,56 @@
-import dash_bootstrap_components as dbc 
-import dash_core_components as dcc
-import dash_html_components as html 
-from dash.dependencies import Input, Output
+import sys
+from Corpus import Corpus
 import dash
+import dash_core_components as dcc
+import dash_bootstrap_components as dbc
+import dash_html_components as html
+import plotly.express as px
+from dash.dependencies import Input, Output
+import plotly.graph_objects as go
+import plotly.figure_factory as ff
+from statsmodels.graphics.gofplots import qqplot
+
+import pandas as pd
+import numpy as np
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-corpus = ['cau 1 cau 1 cau 1 cau 1',
-          'cau 2 cau 2 cau 2 cau 2',
-          'cau 3 cau 3 cau 3 cau 3',
-          'cau 4 cau 4 cau 4 cau 4',
-          'cau 5 cau 5 cau 5 cau 5',
-          'cau 6 cau 6 cau 6 cau 6']
 
-def getSentences(corpus):
-    result = [dbc.ListGroupItem(sen) for sen in corpus]
+corpus = Corpus() # khởi tạo
+dirr = "resources/corpus_mini.txt"  # chọn đường dẫn corpus
+corpus.read(dirr)  # đọc đường dẫn
+corpus.preprocess()   # Tiền xử lí
+corpus.read_word2vec()  # Đọc model word2vec để tìm từ đồng nghĩa
+corpus.read_ner()   # Đọc dữ liệu đã xử lí tên thực thể và từ loại
+
+def searchAmbiguous(corpus, input):
+   temp = corpus.search_ambiguous('miền Trung', case = 1)
+   result = []
+   for res in temp[:10]:
+       result.append(res)
+   return result
+result_SA = searchAmbiguous(corpus, 1)
+@app.callback(Input('label', 'value'),
+            Output('RSA', 'result_SA')
+)
+
+def findSimilar(corpus, input):
+    result = corpus.find_similar(input)
     return result
 
-def returnHighlight(corpus, a):
-    index = corpus.find(a)
-    return index #tra ve vi tri de in
+def findByPost(corpus, input):
+    temp = corpus.search_by_pos('Việt', 'N')
+    result = []
+    for res in temp:
+        result.append(res)
+    return result
     
-# checkbox = html.Div([
-#     dcc.RadioItems(
-#                 options = [
-#                     {'label' : ' Noun ', 'value' : 'Noun'},
-#                     {'label' : ' Word ', 'value' : 'Word'},
-#                     {'label' : ' Adj ', 'value' : 'Adj'},
-#                     {'label' : ' Morpheme ', 'value' : 'Morpheme'},
-#                     {'label' : ' Verb ', 'value' : 'Verb'},
-#                 ],
-#                 value = 'Noun'
-#             )
-# ])
+def findByNer(corpus, input, typeIn):
+    temp = corpus.search_by_ner(input, typeIn)
+    result = []
+    for res in temp:
+        result.append(res)
+    return result
+
 
 title = html.Div([
     html.H1('Vietnamese-Corpus-analysis-Web-app', className = 'display-5')
@@ -45,22 +64,19 @@ input = html.Div([
 
     html.Div([
     dcc.RadioItems(
+                id = 'pos',
                 options = [
-                    {'label' : ' Noun ', 'value' : 'Noun'},
-                    {'label' : ' Word ', 'value' : 'Word'},
-                    {'label' : ' Adj ', 'value' : 'Adj'},
-                    {'label' : ' Morpheme ', 'value' : 'Morpheme'},
-                    {'label' : ' Verb ', 'value' : 'Verb'},
+                    {'label' : ' Noun ', 'value' : 'N'},
+                    {'label' : ' Word ', 'value' : 'W'},
+                    {'label' : ' Adj ', 'value' : 'A'},
+                    {'label' : ' Morpheme ', 'value' : 'M'},
+                    {'label' : ' Verb ', 'value' : 'V'},
                 ],
-                value = 'Noun'
+                value = 'N'
             )
 ])
 ], style={"width": "100%", 'textAlign': 'center', 'justify': 'center' })
 
-# @app.callback(
-#     Output(component_id='my-output', component_property='children'),
-#     Input(component_id='my-input', component_property='value')
-# )
 
 
 def update_output_div(input_value):
@@ -68,23 +84,14 @@ def update_output_div(input_value):
 
 card = dbc.Card(
     dbc.ListGroup(
-        [
-            dbc.ListGroupItem("Item 1: aaaaaaaaaaaaaaaaaaaaa"),
-            dbc.ListGroupItem("Item 2: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
-            dbc.ListGroupItem("Item 3: ccccccccccccccccccccccccccccccccccccc"),
-        ],
+        id = 'RSA'
+        ,
         flush=True,
     ),
     style={"width": "100%", 'textAlign': 'center', 'justify': 'center'},
 )
 
-card = dbc.Card(
-    dbc.ListGroup(
-        getSentences(corpus[:10]),
-        flush=True,
-    ),
-    style={"width": "100%", 'justify': 'center', 'textAlign': 'center'},
-)
+
 
 
 
@@ -93,4 +100,4 @@ card = dbc.Card(
 app.layout = html.Div([title, input, card])
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(host= '127.0.0.1', port = 80, debug= True)
