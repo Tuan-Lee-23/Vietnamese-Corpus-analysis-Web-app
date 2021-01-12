@@ -510,12 +510,12 @@ fig6_5 = px.scatter(df, 'len_sentence_by_words', 'adj_count', color = 'len_sente
                               'nouns_count': 'Số lượng động từ'}).update(layout=dict(title=dict(x=0.5)))
 
 # # fig 6_6
-# temp = df.groupby('len_sentence_by_words')['adj_count'].median().reset_index()
-# fig6_6 = px.scatter(temp, 'len_sentence_by_words', 'adj_count', color = 'len_sentence_by_words',
-#                     title = 'Độ dài câu theo từ vs trung bình số lượng tính từ',
-#                     height = 500,
-#                     labels = {'len_sentence_by_words': 'Độ dài câu theo từ', 
-#                               'nouns_count': 'Trung bình số lượng tính từ'}).update(layout=dict(title=dict(x=0.5)))
+temp = df.groupby('len_sentence_by_words')['adj_count'].median().reset_index()
+fig6_6 = px.scatter(temp, 'len_sentence_by_words', 'adj_count', color = 'len_sentence_by_words',
+                    title = 'Độ dài câu theo từ vs trung bình số lượng tính từ',
+                    height = 500,
+                    labels = {'len_sentence_by_words': 'Độ dài câu theo từ', 
+                              'nouns_count': 'Trung bình số lượng tính từ'}).update(layout=dict(title=dict(x=0.5)))
 
 
 # fig 6_7: histogram danh từ, động từ, tính từ có trung bình bao nhiêu tiếng
@@ -552,6 +552,47 @@ fig6_9 = px.histogram(adj_df, x = "count", nbins = 4,
                     color_discrete_sequence= ['#4F2992'],
                     height = 500).update(layout=dict(title=dict(x=0.5)))
 
+# fig 6_10: top 10 danh từ động từ tính từ
+
+
+def get_top_pos(pos):
+    top_10 = dict(Counter(pos))
+    sample_space = sum(top_10.values())
+
+    count_df = pd.DataFrame.from_dict(top_10, orient = 'index', columns = ['count'])
+
+    count_df = count_df.sort_values(by = 'count', ascending = False)
+
+    count_df.loc[:, 'count'] = count_df['count'] / sample_space
+
+    top_10= count_df.head(10)
+
+    return top_10
+
+top_10_nouns = get_top_pos(nouns)
+top_10_verbs = get_top_pos(verbs)
+top_10_adj = get_top_pos(adj)
+
+fig6_10 = plotBar(top_10_nouns, top_10_nouns.index, 'count', 'Top 10 danh từ')
+fig6_10.update_layout(
+    xaxis_title = 'Danh từ',
+    yaxis_title = 'Số lần xuất hiện (%)'
+)
+
+fig6_11 = plotBar(top_10_verbs, top_10_verbs.index, 'count', 'Top 10 động từ')
+fig6_11.update_layout(
+    xaxis_title = 'Động từ',
+    yaxis_title = 'Số lần xuất hiện (%)'
+)
+
+fig6_12 = plotBar(top_10_adj, top_10_adj.index, 'count', 'Top 10 tính từ')
+fig6_12.update_layout(
+    xaxis_title = 'Tính từ',
+    yaxis_title = 'Số lần xuất hiện (%)'
+)
+
+
+
 #fig 7 top ten thuc the
 def getNER(data, type):
     ner_container = []
@@ -578,15 +619,15 @@ len_per = len(per) / total_ner
 len_org = len(org) / total_ner
 
 ner_df = pd.DataFrame({"ner": ['location', 'person', 'organization'], "count": [len_loc, len_per, len_org]})
-print(ner_df)
 
 
-fig7 = plotBar(ner_df, 'ner', 'count', 'Top 10 stop-words')
+fig7 = plotBar(ner_df, 'ner', 'count', 'Số lượng tên thực thể theo loại')
 fig7.update_layout(
     xaxis_title = 'NER',
-    yaxis_title = 'Xác suất xuất hiện (' + str(total_ner) + ')'
+    yaxis_title = 'Số lần xuất hiện (% ' + str(total_ner) + ')'
 )
 
+# fig 8: phân phối số lượng dấu câu trong 1 câu
 
 
 
@@ -724,6 +765,161 @@ statistics = [
         )
     ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
 
+     # Graph 5_1
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig5_1',
+                figure = fig5_1
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig5_2',
+                figure = fig5_2
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig5_3',
+                figure = fig5_3
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig5_4',
+                figure = fig5_4
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_1',
+                figure = fig6_1
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_2',
+                figure = fig6_2
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_3',
+                figure = fig6_3
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_4',
+                figure = fig6_4
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_5',
+                figure = fig6_5
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_6',
+                figure = fig6_6
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_7',
+                figure = fig6_7
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_8',
+                figure = fig6_8
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_9',
+                figure = fig6_9
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_10',
+                figure = fig6_10
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_11',
+                figure = fig6_11
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig6_12',
+                figure = fig6_12
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(
+                id = 'fig7',
+                figure = fig7
+            )
+        )
+    ], style = {'marginLeft': -52, 'marginRight': -52, 'justifyContent': 'center'}),
+
+
 
 ]
 
@@ -732,5 +928,5 @@ app.layout = dbc.Container(
     statistics
 )
 
-# if __name__ == '__main__':
-    # app.run_server(host= '127.0.0.1', port = 80, debug= True)
+if __name__ == '__main__':
+    app.run_server(debug= True)
