@@ -18,7 +18,7 @@ import numpy as np
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 corpus = Corpus()
-corpus.read('resources/corpus_mini.txt')
+corpus.read('resources/vn_express.txt')
 corpus.preprocess()
 corpus.read_ner()
 # corpus.read_word2vec()
