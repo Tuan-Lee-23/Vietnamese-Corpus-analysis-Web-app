@@ -128,13 +128,13 @@ class Corpus:
             w2v_model.train(sentences = self.data_word_segment, total_examples=w2v_model.corpus_count, epochs=30, report_delay=1)
             print('Time to train the model: {} mins'.format(round((time() - t) / 60, 2)))
             w2v_model.init_sims(replace=True) # lower memory used
-            with open('drafts/w2v.pik', 'wb') as f:
+            with open('resources/w2v.pik', 'wb') as f:
                 pickle.dump(w2v_model, f, -1)
                 print("Word2Vec model was saved successfully")
 
 
     def read_word2vec(self):
-        with open('drafts/w2v.pik', 'rb') as f:
+        with open('resources/w2v.pik', 'rb') as f:
             w2v_model = pickle.load(f)
             corpus_vocabs = dict()
             for item in w2v_model.wv.vocab:
@@ -173,12 +173,12 @@ class Corpus:
         #                 fp.write(",")
         #             fp.write("\n")
         #         fp.write("\n")
-        with open('drafts/ner.pik', 'wb') as f:
+        with open('resources/ner.pik', 'wb') as f:
             pickle.dump(self.data_pos_tagged, f, -1)
         print("NER was saved successfully")
 
     def read_ner(self):
-        with open('drafts/ner.pik', 'rb') as f:
+        with open('resources/ner.pik', 'rb') as f:
             self.data_pos_tagged = pickle.load(f)
 
     # Search
