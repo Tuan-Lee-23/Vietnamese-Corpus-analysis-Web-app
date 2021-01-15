@@ -4,16 +4,17 @@
 ### Corpus search tool:
 Our tool can search in corpus by:
 - Ambiguous: you can search everthing such as character, number, morpheme,...
-- Noun
-- Verb
-- Adjective
-- Name of Person
-- Name of Location
-- Name of Organization
-Our tool will show all the results
+- Noun (POS tagging)
+- Verb (POS tagging)
+- Adjective (POS tagging)
+- Name of Person (NER model)
+- Name of Location (NER model)
+- Name of Organization (NER model)
+- Show top 10 similar words of your input (gensim word2Vec)
+
 
 ### Corpus dataset:
-- I did web scrapping and get 12k description of topics on vnexpress.net
+- I did web scrapping and got 12k description of topics on vnexpress.net
 
 
 ## Libraries used:
@@ -44,7 +45,7 @@ python src_statistics/app.py
 
 ### Using another corpus
 - Rename your corpus file into "vn_express.txt" and replace it in resources/
-- You have to run "python src/create_NER_pickle.py", then type in your corpus' directory: "resources/vn_express.txt" to build the NER model and Word2vec model, output as 2 file ner.pik and w2v.pik
+- You have to run "python src/create_NER_pickle.py", then type in your corpus' directory: "resources/vn_express.txt" to build the NER model and Word2vec model, output as 2 files ner.pik and w2v.pik
 - You only need to run once when using a new corpus
 
 ### Folders structure:
@@ -60,4 +61,7 @@ python src_statistics/app.py
   - stop_words.txt: File contains Vietnamese stopwords 
 
 ## Demo
-###
+### Corpus search tool
+![image](https://drive.google.com/uc?export=view&id=1dainTJzqsBRTHOEOwKOAwuwoS4wPBhcb)
+### Statistical analysis tool
+
