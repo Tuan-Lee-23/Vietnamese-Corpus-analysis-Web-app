@@ -64,4 +64,5 @@ python src_statistics/app.py
 ### Corpus search tool
 ![image](https://drive.google.com/uc?export=view&id=1dainTJzqsBRTHOEOwKOAwuwoS4wPBhcb)
 ### Statistical analysis tool
+![image](https://drive.google.com/uc?export=view&id=1UhwPVNJoBqmwD1vu_5CcvHoj8lnYFKxs)
 
