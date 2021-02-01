@@ -2,19 +2,19 @@
 
 ## Features:
 ### Corpus search tool:
-Our tool can search in corpus by:
-- Ambiguous: you can search everthing such as character, number, morpheme,...
+Our tool can search in a corpus by:
+- Ambiguous: you can search everything such as character, number, morpheme,...
 - Noun (POS tagging)
 - Verb (POS tagging)
 - Adjective (POS tagging)
 - Name of Person (NER model)
 - Name of Location (NER model)
 - Name of Organization (NER model)
-- Show top 10 similar words of your input (gensim word2Vec)
+- Show the top 10 similar words of your input (gensim word2Vec)
 
 
 ### Corpus dataset:
-- I did web scrapping and got 12k description of topics on vnexpress.net
+- I did web scrapping and got 12k description lines on vnexpress.net
 
 
 ## Libraries used:
@@ -44,7 +44,7 @@ python src_statistics/app.py
 - Wait about 1 minute for the server, if you see the local host link in terminal, then ctrl click open it or copy and paste it into browser
 
 ### Using another corpus
-- Rename your corpus file into "vn_express.txt" and replace it in resources/
+- Rename your corpus file to "vn_express.txt" and replace it in resources/
 - You have to run "python src/create_NER_pickle.py", then type in your corpus' directory: "resources/vn_express.txt" to build the NER model and Word2vec model, output as 2 files ner.pik and w2v.pik
 - You only need to run once when using a new corpus
 
